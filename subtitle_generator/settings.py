@@ -36,7 +36,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # CORS middleware must be before CommonMiddleware
     'django.middleware.common.CommonMiddleware',
     'subtitle_app.middleware.DisableCSRFForAPI',  # Custom middleware to disable CSRF for logout
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -148,8 +148,12 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 CORS_ORIGINS_STR = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000')
 CORS_ALLOWED_ORIGINS = [origin.strip() for origin in CORS_ORIGINS_STR.split(',') if origin.strip()]
 
+# Debug: Print CORS origins (remove in production)
+if DEBUG:
+    print(f"CORS_ALLOWED_ORIGINS: {CORS_ALLOWED_ORIGINS}")
+
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
+CORS_ALLOW_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD']
 CORS_ALLOW_HEADERS = [
     'accept',
     'accept-encoding',
@@ -161,6 +165,9 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
+
+# Additional CORS settings for preflight requests
+CORS_PREFLIGHT_MAX_AGE = 86400  # 24 hours
 
 # Session settings for authentication
 SESSION_COOKIE_HTTPONLY = True
@@ -172,18 +179,6 @@ CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript to read CSRF token
 CSRF_COOKIE_SAMESITE = 'None'  # Changed to None for cross-origin requests
 CSRF_COOKIE_SECURE = True  # Set to True for HTTPS in production
 CSRF_USE_SESSIONS = False
-
-CORS_ALLOW_HEADERS = [
-    'accept',
-    'accept-encoding',
-    'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
-]
 
 # REST Framework settings
 REST_FRAMEWORK = {
