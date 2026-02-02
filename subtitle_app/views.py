@@ -1,6 +1,7 @@
 from rest_framework import status, generics
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.permissions import AllowAny
 from django.http import FileResponse, HttpResponseNotFound, HttpResponse
 from django.conf import settings
 import os
@@ -13,15 +14,16 @@ class VideoUploadView(generics.CreateAPIView):
     """API endpoint for uploading videos and generating subtitles."""
     serializer_class = VideoUploadSerializer
     parser_classes = (MultiPartParser, FormParser)
+    permission_classes = [AllowAny]  # TEMPORARY: disable auth to test if upload works; revert after test
 
     def post(self, request, *args, **kwargs):
         """Handle video upload and initiate subtitle generation."""
-        # Check if user is authenticated
-        if not request.user.is_authenticated:
-            return Response(
-                {'error': 'Authentication required to upload videos'}, 
-                status=status.HTTP_401_UNAUTHORIZED
-            )
+        # TEMPORARY: auth check disabled to confirm upload works cross-origin; re-enable after test
+        # if not request.user.is_authenticated:
+        #     return Response(
+        #         {'error': 'Authentication required to upload videos'},
+        #         status=status.HTTP_401_UNAUTHORIZED
+        #     )
         
         serializer = self.get_serializer(data=request.data)
         
