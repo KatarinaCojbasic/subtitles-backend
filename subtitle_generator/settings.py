@@ -33,17 +33,20 @@ INSTALLED_APPS = [
     'subtitle_app',
 ]
 
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',  # CORS middleware must be before CommonMiddleware
+    'corsheaders.middleware.CorsMiddleware', # CORS middleware must be before CommonMiddleware
     'django.middleware.common.CommonMiddleware',
-    'subtitle_app.middleware.DisableCSRFForAPI',  # Custom middleware to disable CSRF for logout
     'django.middleware.csrf.CsrfViewMiddleware',
+    'subtitle_app.middleware.DisableCSRFForAPI', # Custom middleware to disable CSRF for logout
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+
 
 # CSRF settings - exempt API endpoints from CSRF
 CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript to read CSRF token
