@@ -153,6 +153,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Get CORS origins from environment variable or use defaults
 CORS_ORIGINS_STR = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000')
 CORS_ALLOWED_ORIGINS = [origin.strip() for origin in CORS_ORIGINS_STR.split(',') if origin.strip()]
+CORS_URLS_REGEX = r"^/api/.*$"
 
 # Debug: Print CORS origins (remove in production)
 if DEBUG:
