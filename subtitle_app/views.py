@@ -5,9 +5,24 @@ from rest_framework.permissions import AllowAny
 from django.http import FileResponse, HttpResponseNotFound, HttpResponse
 from django.conf import settings
 import os
+import threading
 from .models import VideoUpload
 from .serializers import VideoUploadSerializer
 from .subtitle_generator import generate_subtitles
+
+
+def run_subtitle_generation(video_upload):
+    """Run subtitle generation in background; set status failed on uncaught exception."""
+    try:
+        generate_subtitles(video_upload)
+    except Exception as e:
+        import traceback
+        error_message = str(e)
+        error_traceback = traceback.format_exc()
+        print(f"ERROR processing video {video_upload.id}: {error_message}\n{error_traceback}")
+        video_upload.status = 'failed'
+        video_upload.error_message = error_message
+        video_upload.save()
 
 
 class VideoUploadView(generics.CreateAPIView):
@@ -33,41 +48,21 @@ class VideoUploadView(generics.CreateAPIView):
             video_upload.status = 'processing'
             video_upload.save()
             
-            try:
-                # Generate subtitles (non-blocking)
-                generate_subtitles(video_upload)
-                
-                # Return the response with the video ID
-                response_serializer = VideoUploadSerializer(
-                    video_upload, 
-                    context={'request': request}
-                )
-                return Response(
-                    response_serializer.data, 
-                    status=status.HTTP_202_ACCEPTED
-                )
-            except Exception as e:
-                # Update status if an error occurs
-                import traceback
-                error_traceback = traceback.format_exc()
-                error_message = str(e)
-                
-                print(f"ERROR processing video {video_upload.id}:")
-                print(f"Error message: {error_message}")
-                print(f"Traceback:\n{error_traceback}")
-                
-                video_upload.status = 'failed'
-                video_upload.error_message = error_message
-                video_upload.save()
-                
-                return Response(
-                    {
-                        'error': 'Failed to process video',
-                        'detail': error_message,
-                        'traceback': error_traceback if settings.DEBUG else None
-                    }, 
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
+            thread = threading.Thread(
+                target=run_subtitle_generation,
+                args=(video_upload,),
+                daemon=True,
+            )
+            thread.start()
+            
+            response_serializer = VideoUploadSerializer(
+                video_upload,
+                context={'request': request}
+            )
+            return Response(
+                response_serializer.data,
+                status=status.HTTP_202_ACCEPTED
+            )
         
         return Response(
             serializer.errors, 
