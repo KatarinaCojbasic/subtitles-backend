@@ -2,6 +2,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.db import transaction
@@ -96,10 +97,11 @@ def login_view(request):
     user = authenticate(request, username=data['email'], password=data['password'])
     
     if user is not None:
-        login(request, user)
+        token, _ = Token.objects.get_or_create(user=user)
         return Response(
             {
                 'message': 'Login successful',
+                'token': token.key,
                 'user': {
                     'id': user.id,
                     'email': user.email,
@@ -119,10 +121,9 @@ def login_view(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def logout_view(request):
-    """User logout endpoint."""
-    # Skip CSRF check for logout - it's safe as it only clears session
-    # Logout even if user is not authenticated (to clear any stale sessions)
+    """User logout endpoint. Invalidates token when authenticated via token."""
     if request.user.is_authenticated:
+        Token.objects.filter(user=request.user).delete()
         logout(request)
     return Response(
         {'message': 'Logout successful'},

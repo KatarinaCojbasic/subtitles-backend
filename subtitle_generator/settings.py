@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework.authtoken',
     'corsheaders',
     'subtitle_app',
 ]
@@ -74,10 +75,11 @@ TEMPLATES = [
 WSGI_APPLICATION = 'subtitle_generator.wsgi.application'
 
 # Database
-# Use PostgreSQL if DATABASE_URL is provided, otherwise fallback to SQLite
+# Set USE_SQLITE=true in local .env to use SQLite when DATABASE_URL points to a remote DB (e.g. Render) that is not reachable from your machine
+USE_SQLITE = os.getenv('USE_SQLITE', '').lower() in ('1', 'true', 'yes')
 DATABASE_URL = os.getenv('DATABASE_URL', '')
 
-if DATABASE_URL:
+if not USE_SQLITE and DATABASE_URL:
     # Parse DATABASE_URL format: postgresql://user:password@host:port/dbname
     import re
     match = re.match(r'postgresql://([^:]+):([^@]+)@([^:]+):(\d+)/(.+)', DATABASE_URL)
@@ -189,6 +191,7 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.AllowAny',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_RENDERER_CLASSES': [
